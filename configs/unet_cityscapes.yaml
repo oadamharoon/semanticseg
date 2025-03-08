@@ -1,0 +1,102 @@
+# Model configuration
+model:
+  name: 'unet'  # Model type from registry
+  params:
+    in_channels: 3
+    num_classes: 19  # Cityscapes has 19 classes
+    base_channels: 64
+    bilinear: true
+
+# Dataset configuration
+dataset:
+  train:
+    name: 'generic_segmentation'
+    params:
+      root_dir: '/path/to/cityscapes'
+      split: 'train'
+      image_size: [512, 1024]
+      augment: true
+      image_dir: 'leftImg8bit/train'
+      mask_dir: 'gtFine/train'
+      image_suffix: '_leftImg8bit.png'
+      mask_suffix: '_gtFine_labelIds.png'
+    loader:
+      batch_size: 8
+      num_workers: 4
+      shuffle: true
+
+  val:
+    name: 'generic_segmentation'
+    params:
+      root_dir: '/path/to/cityscapes'
+      split: 'val'
+      image_size: [512, 1024]
+      augment: false
+      image_dir: 'leftImg8bit/val'
+      mask_dir: 'gtFine/val'
+      image_suffix: '_leftImg8bit.png'
+      mask_suffix: '_gtFine_labelIds.png'
+    loader:
+      batch_size: 4
+      num_workers: 4
+      shuffle: false
+
+  test:
+    name: 'generic_segmentation'
+    params:
+      root_dir: '/path/to/cityscapes'
+      split: 'test'
+      image_size: [512, 1024]
+      augment: false
+      image_dir: 'leftImg8bit/test'
+      mask_dir: 'gtFine/test'
+      image_suffix: '_leftImg8bit.png'
+      mask_suffix: '_gtFine_labelIds.png'
+    loader:
+      batch_size: 1
+      num_workers: 4
+      shuffle: false
+
+# Loss function configuration
+loss:
+  type: 'combined_loss'
+  losses:
+    - name: 'cross_entropy'
+      params:
+        weight: [1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0, 3.0, 3.0, 3.0, 2.0, 3.0, 1.0, 2.0, 2.0, 2.0, 1.0]
+        ignore_index: 255
+    - name: 'dice_loss'
+      params:
+        smooth: 1.0
+        ignore_index: 255
+  weights: [0.7, 0.3]
+
+# Optimizer configuration
+optimizer:
+  type: 'adam'
+  lr: 0.0001
+  
+# Scheduler configuration
+scheduler:
+  type: 'cosine'
+  T_max: 100
+
+# Training configuration
+training:
+  epochs: 100
+  save_frequency: 5
+  output_dir: './experiments'
+  main_metric: 'iou'  # Metric to track for best model
+  minimize_metric: false
+
+# Metrics to track
+metrics:
+  - 'pixel_accuracy'
+  - 'iou'
+  - 'dice_coefficient'
+
+# Visualization configuration
+visualization:
+  enabled: true
+  frequency: 5
+  num_samples: 4
